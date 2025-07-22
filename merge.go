@@ -12,6 +12,11 @@ import (
 	"github.com/lann/builder"
 )
 
+type Typed struct {
+	Type  string
+	Value interface{}
+}
+
 type mergeData struct {
 	PlaceholderFormat PlaceholderFormat
 	RunWith           BaseRunner
@@ -135,6 +140,12 @@ func (d *mergeData) appendValuesToSQL(w io.Writer, args []interface{}) ([]interf
 	for r, row := range d.Values {
 		valueStrings := make([]string, len(row))
 		for v, val := range row {
+			var valueType string
+			switch rv := val.(type) {
+			case Typed:
+				valueType = rv.Type
+				val = rv.Value
+			}
 			if vs, ok := val.(Sqlizer); ok {
 				vsql, vargs, err := vs.ToSql()
 				if err != nil {
@@ -145,6 +156,9 @@ func (d *mergeData) appendValuesToSQL(w io.Writer, args []interface{}) ([]interf
 			} else {
 				valueStrings[v] = "?"
 				args = append(args, val)
+			}
+			if valueType != "" {
+				valueStrings[v] = fmt.Sprintf("%s::%s", valueStrings[v], valueType)
 			}
 		}
 		valuesStrings[r] = fmt.Sprintf("(%s)", strings.Join(valueStrings, ","))
