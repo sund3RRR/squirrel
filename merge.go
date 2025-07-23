@@ -58,11 +58,11 @@ func (d *mergeData) QueryRow() RowScanner {
 
 func (d *mergeData) ToSql() (sqlStr string, args []interface{}, err error) {
 	if len(d.Into) == 0 {
-		err = errors.New("merge statements must specify a table")
+		err = ErrNoTable
 		return
 	}
 	if len(d.Values) == 0 && d.Select == nil {
-		err = errors.New("merge statements must have at least one set of values or select clause")
+		err = ErrNoValues
 		return
 	}
 
